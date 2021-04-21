@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidecar-injector-webhook
+spec:
+  selector:
+    matchLabels:
+      app: sidecar-injector-webhook
+  template:
+    metadata:
+      labels:
+        app: sidecar-injector-webhook
+    spec:
+      volumes:
+        - name: certs
+          secret:
+            secretName: webhook-tls-certs
+
+      containers:
+        - name: sidecar-injector-webhook
+          image: sachinnicky/sidecar-injector-webhook
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /certs
+              name: certs
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sidecar-injector-webhook
+spec:
+  selector:
+    app: sidecar-injector-webhook
+  ports:
+    - port: 443
+      targetPort: 8443
